@@ -11,8 +11,9 @@ class FirebaseService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final usersCollection = 'users';
-  Map? currentUser;
+  final String _usersCollection = 'users';
+  final String _postsCollection = 'posts';
+  //Map? _currentUser;
 
   Future<bool> registerUser({
     required String name,
@@ -28,9 +29,9 @@ class FirebaseService {
       String userId = userCredential.user!.uid;
       String fileName = Timestamp.now().millisecondsSinceEpoch.toString() + path.extension(image.path);
       UploadTask task = _storage.ref('images/$userId/$fileName').putFile(image);
-      return task.then((snapshot) async {
+      return await task.then((snapshot) async {
         String downloadUrl = await snapshot.ref.getDownloadURL();
-        await _db.collection(usersCollection).doc(userId).set({
+        await _db.collection(_usersCollection).doc(userId).set({
           'name': name,
           'email': email,
           'image': downloadUrl,
@@ -53,7 +54,7 @@ class FirebaseService {
         password: password,
       );
       if (userCredential.user != null) {
-        currentUser = await _getUserData(userId: userCredential.user!.uid);
+        //_currentUser = await _getUserData(userId: userCredential.user!.uid);
         return true;
       }
       else {
@@ -66,7 +67,27 @@ class FirebaseService {
   }
 
   Future<Map> _getUserData({required String userId}) async {
-    DocumentSnapshot doc = await _db.collection(usersCollection).doc(userId).get();
+    DocumentSnapshot doc = await _db.collection(_usersCollection).doc(userId).get();
     return doc.data() as Map;
+  }
+
+  Future<bool> createPost({required File image}) async {
+    try {
+      String userId = _auth.currentUser!.uid;
+      String fileName = Timestamp.now().millisecondsSinceEpoch.toString() + path.extension(image.path);
+      UploadTask task = _storage.ref('images/$userId/$fileName').putFile(image);
+      return await task.then((snapshot) async {
+        String downloadUrl = await snapshot.ref.getDownloadURL();
+        await _db.collection(_postsCollection).add({
+          'userId': userId,
+          'timestamp': Timestamp.now(),
+          'image': downloadUrl,
+        });
+        return true;
+      });
+    } catch (e) {
+      print(e);
+      return false;
+    }
   }
 }

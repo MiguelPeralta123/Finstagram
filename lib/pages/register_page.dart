@@ -70,12 +70,13 @@ class _RegisterPageState extends State<RegisterPage> {
     //var imageProvider = _image != null ? FileImage(_image!) : const NetworkImage("https://as2.ftcdn.net/v2/jpg/03/49/49/79/1000_F_349497933_Ly4im8BDmHLaLzgyKg2f2yZOvJjBtlw5.jpg");
 
     return GestureDetector(
-      onTap: () {
-        FilePicker.platform.pickFiles(type: FileType.image).then((value) {
+      onTap: () async {
+        FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.image);
+        if(result != null) {
           setState(() {
-            _image = File(value!.files.first.path!);
+            _image = File(result.files.first.path!);
           });
-        });
+        }
       },
       child: Container(
         height: _deviceHeight * 0.18,
