@@ -1,9 +1,9 @@
 import 'package:finstagram/services/firebase_service.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'dart:io';
-
 import 'package:get_it/get_it.dart';
+import 'dart:io';
+import 'package:permission_handler/permission_handler.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -35,7 +35,7 @@ class _RegisterPageState extends State<RegisterPage> {
     return Scaffold(
       body: SafeArea(
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: _deviceWidth * 0.15),
+          padding: EdgeInsets.symmetric(horizontal: _deviceWidth * 0.12),
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.max,
@@ -66,16 +66,22 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Widget _registerImage() {
-    var imageProvider = _image != null ? FileImage(_image!) : const NetworkImage("https://i.pravatar.cc/300");
-    //var imageProvider = _image != null ? FileImage(_image!) : const NetworkImage("https://as2.ftcdn.net/v2/jpg/03/49/49/79/1000_F_349497933_Ly4im8BDmHLaLzgyKg2f2yZOvJjBtlw5.jpg");
+    // todo: change this networkimage for an image stored in assets
+    var imageProvider = _image != null ? FileImage(_image!) : const NetworkImage("https://as2.ftcdn.net/v2/jpg/03/49/49/79/1000_F_349497933_Ly4im8BDmHLaLzgyKg2f2yZOvJjBtlw5.jpg");
 
     return GestureDetector(
       onTap: () async {
-        FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.image);
-        if(result != null) {
-          setState(() {
-            _image = File(result.files.first.path!);
-          });
+        bool storagePermission = await _requestStoragePermission();
+        if(storagePermission) {
+          FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.image);
+          if(result != null) {
+            setState(() {
+              _image = File(result.files.first.path!);
+            });
+          }
+        }
+        else {
+          print('Storage permission was not granted');
         }
       },
       child: Container(
@@ -209,5 +215,21 @@ class _RegisterPageState extends State<RegisterPage> {
         ),
       ),
     );
+  }
+
+  Future<bool> _requestStoragePermission() async {
+    var status = await Permission.storage.status;
+    if(status.isGranted) {
+      return true;
+    }
+    else {
+      var result = await Permission.storage.request();
+      if(result.isGranted) {
+        return true;
+      }
+      else {
+        return false;
+      }
+    }
   }
 }

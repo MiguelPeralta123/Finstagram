@@ -1,9 +1,8 @@
-import 'dart:io';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:path/path.dart' as path;
+import 'dart:io';
 
 class FirebaseService {
   FirebaseService();
@@ -13,7 +12,7 @@ class FirebaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final String _usersCollection = 'users';
   final String _postsCollection = 'posts';
-  //Map? _currentUser;
+  Map? currentUser;
 
   Future<bool> registerUser({
     required String name,
@@ -54,7 +53,7 @@ class FirebaseService {
         password: password,
       );
       if (userCredential.user != null) {
-        //_currentUser = await _getUserData(userId: userCredential.user!.uid);
+        currentUser = await _getUserData(userId: userCredential.user!.uid);
         return true;
       }
       else {
@@ -64,6 +63,10 @@ class FirebaseService {
       print(e);
       return false;
     }
+  }
+
+  Future<void> logoutUser() {
+    return _auth.signOut();
   }
 
   Future<Map> _getUserData({required String userId}) async {
@@ -89,5 +92,19 @@ class FirebaseService {
       print(e);
       return false;
     }
+  }
+
+  Stream<QuerySnapshot> getPosts() {
+    return _db.collection(_postsCollection)
+      .orderBy('timestamp', descending: true)
+      .snapshots();
+  }
+
+  Stream<QuerySnapshot> getPostsByUser() {
+    String userId = _auth.currentUser!.uid;
+    return _db.collection(_postsCollection)
+      .where('userId', isEqualTo: userId)
+      //.orderBy('timestamp', descending: true)
+      .snapshots();
   }
 }

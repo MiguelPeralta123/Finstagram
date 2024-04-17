@@ -31,7 +31,7 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       body: SafeArea(
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: _deviceWidth * 0.15),
+          padding: EdgeInsets.symmetric(horizontal: _deviceWidth * 0.12),
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.max,
